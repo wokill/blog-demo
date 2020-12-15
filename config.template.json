@@ -1,0 +1,52 @@
+{
+  "app": "mk-blog-svc",
+  "server": {
+    "host": "",
+    "port": "5000",
+    "grpc_port": "50000"
+  },
+  "mongo": {
+    "mk_biz": {
+      "addr": "mongodb://127.0.0.1:27017",
+      "auth": {
+        "username": "root",
+        "password": "abcd1234",
+        "source": "admin",
+        "on": true
+      },
+      "mk": {
+        "name": "mk_dev"
+      }
+    },
+    "mk_wat": {
+      "addr": "mongodb://127.0.0.1:27017",
+      "auth": {
+        "username": "root",
+        "password": "abcd1234",
+        "source": "admin",
+        "on": true
+      }
+    },
+    "wp": {
+      "addr": "mongodb://127.0.0.1:27017",
+      "auth": {
+        "username": "root",
+        "password": "abcd1234",
+        "source": "admin",
+        "on": true
+      }
+    }
+  },
+  "redis": {
+    "addr": "127.0.0.1:6379",
+    "password": "abcd1234",
+    "poolsize": 5,
+    "cachedb": 6
+  },
+  "es": {
+    "addr": "http://127.0.0.1:9200",
+    "username": "",
+    "password": ""
+  },
+  "mode": "debug"
+}

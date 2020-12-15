@@ -1,0 +1,7 @@
+{
+  "type": "swagger",
+  "token": "0e85fa59637c99a87bcfc33cc703580cf53dd206292be5caad3b296ba0f426c4",
+  "file": "api/swagger/swagger.json",
+  "merge": "mergin",
+  "server": "https://yapi.dustess.com"
+}

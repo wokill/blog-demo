@@ -1,0 +1,6 @@
+.idea
+vendor
+config.json
+api/swagger/*
+!api/swagger/.gitkeep
+.vscode

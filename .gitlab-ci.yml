@@ -1,0 +1,58 @@
+variables:
+  KUBECONFIG: /etc/deploy/config
+  BUILDS_CACHE_DIR: /builds/cache
+  PROJECT_NAME: mk-blog-svc
+  GIT_CLONE_PATH: $BUILDS_CACHE_DIR/$PROJECT_NAME-$CI_COMMIT_REF_NAME
+  BRANCH: $CI_COMMIT_REF_NAME
+  NAMESPACE: mk-$CI_COMMIT_REF_NAME
+  DOCKER_IMAGE_NAME: markting/$PROJECT_NAME
+
+stages:
+  - docker_build
+  - deploy_k8s
+
+go_build_job:
+  image: registry-in.dustess.com:9000/markting/docker:dind19.03.1-go1.12.9-mk
+  stage: docker_build
+  tags:
+    - k8s-runner
+  before_script:
+    - docker login -u $REGISTRY_USERNAME -p $REGISTRY_PASSWORD registry-in.dustess.com:9000
+    - git checkout -B $BRANCH $CI_COMMIT_REF
+    - git checkout -- . # 撤销 git 工作区修改
+    - git log -1 && git status
+  script:
+    - make doc
+    - make build
+    - make publish
+  only:
+    - ignore
+#    - master
+#    - dev
+#    - tags
+
+deploy_k8s_job:
+  image: lachlanevenson/k8s-kubectl:latest
+  stage: deploy_k8s
+  tags:
+    - k8s-runner
+  before_script:
+    - mkdir -p /etc/deploy
+    - echo $kube_config |base64 -d > $KUBECONFIG
+  script:
+    - sed -i "s|\!IMAGE_TAG|$BRANCH|g" config.$BRANCH.json
+    - sed -i "s|\!PROJECT_NAME|$PROJECT_NAME|g" config.$BRANCH.json
+    - sed -i "s/!NAMESPACE/$NAMESPACE/g" config.$BRANCH.json
+    - cat config.$BRANCH.json
+    - kubectl create configmap config-$PROJECT_NAME --from-file=config.json=config.$BRANCH.json -n $NAMESPACE -o yaml --dry-run | kubectl apply -f -
+    - sed -i "s|\!IMAGE_TAG|$BRANCH|g" manifest.yaml
+    - sed -i "s|\!PROJECT_NAME|$PROJECT_NAME|g" manifest.yaml
+    - sed -i "s|\!DOCKER_IMAGE_NAME|$DOCKER_IMAGE_NAME|g" manifest.yaml
+    - cat manifest.yaml
+    - kubectl apply -f manifest.yaml -n $NAMESPACE
+  after_script:
+    - kubectl patch deployment $PROJECT_NAME -p "{\"spec\":{\"template\":{\"metadata\":{ \"labels\":{  \"redeploy\":\"$(date +%s)\"}}}}}" -n $NAMESPACE # 强制pod重启
+  only:
+    - ignore
+#    - master
+#    - dev
